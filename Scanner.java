@@ -41,9 +41,20 @@ class Scanner {
     return tokens;
   }
 
+  /*
+   * Consumes the next character in the source code
+   * and generates a Token based on that character.
+   *
+   * Supports single- and multi-character lexemes;
+   * performs a lookahead and conditional consumption
+   * for lexemes that span more than one character.
+   *
+   * Adds generated Tokens to the Scanner's token list.
+   */
   private void scanToken() {
     char c = advance();
     switch (c) {
+      // Single-character tokens.
       case '(': addToken(LEFT_PAREN); break;
       case ')': addToken(RIGHT_PAREN); break;
       case '{': addToken(LEFT_BRACE); break;
@@ -54,6 +65,20 @@ class Scanner {
       case '+': addToken(PLUS); break;
       case ';': addToken(SEMICOLON); break;
       case '*': addToken(STAR); break;
+
+      // One- or two-character operators.
+      case '!':
+        addToken(match('=') ? BANG_EQUAL : BANG);
+        break;
+      case '=':
+        addToken(match('=') ? EQUAL_EQUAL : EQUAL);
+        break;
+      case '<':
+        addToken(match('=') ? LESS_EQUAL : LESS);
+        break;
+      case '>':
+        addToken(match('=') ? GREATER_EQUAL : GREATER);
+        break;
       
       default:
         /*
@@ -68,6 +93,33 @@ class Scanner {
         Lox.error(line, "Unexpected character.");
         break;
     }
+  }
+
+  /*
+   * Helper function that acts as a conditional advance().
+   *
+   * If the next character in the source code matches
+   * expected, consumes that next character and returns true.
+   *
+   * If the Scanner is at the end of the source code (i.e.
+   * there is no next character) or the next character does
+   * not match the expected character, returns false
+   * without consuming the next character.
+   *
+   * @return true if next character matches expected,
+   *          false if not or if the Scanner is at the end of source
+   */
+  private boolean match(char expected) {
+    if (!isAtEnd()) {
+      return false;
+    }
+
+    if (source.charAt(current) != expected) {
+      return false;
+    }
+
+    current++;
+    return true;
   }
 
   /*
