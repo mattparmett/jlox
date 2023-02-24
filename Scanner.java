@@ -101,7 +101,10 @@ class Scanner {
         // beginning of loop, creating a new lexeme.
         break;
 
-
+      // Strings - outsource processing
+      case '"':
+        string();
+        break;
       
       default:
         /*
@@ -116,6 +119,32 @@ class Scanner {
         Lox.error(this.line, "Unexpected character.");
         break;
     }
+  }
+
+  private void string() {
+    // Consume string contents until we hit
+    // terminating quote or EOF.
+    while (peek() != '"' && !isAtEnd()) {
+      // We ignore newlines within the string,
+      // but still need to increment the line number.
+      if (peek() == '\n') {
+        this.line++;
+      }
+      advance();
+    }
+
+    // We hit EOF without finding a closing quote.
+    if (isAtEnd()) {
+      Lox.error(line, "Unterminated string.");
+      return;
+    }
+
+    // Consume the closing ".
+    advance();
+
+    // Trim the enclosing quotes.
+    String value = this.source.substring(start + 1, current - 1);
+    addToken(STRING, value);
   }
 
   /*
