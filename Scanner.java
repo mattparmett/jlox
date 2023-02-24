@@ -17,6 +17,27 @@ class Scanner {
   private int current = 0;  // tracks current position in source
   private int line = 1;  // tracks line in source
 
+  private static final Map<String, TokenType> keywords;
+  static {
+    keywords = new HashMap<>();
+    keywords.put("and",     AND);
+    keywords.put("class",   CLASS);
+    keywords.put("else",    ELSE);
+    keywords.put("false",   FALSE);
+    keywords.put("for",     FOR);
+    keywords.put("fun",     FUN);
+    keywords.put("if",      IF);
+    keywords.put("nil",     NIL);
+    keywords.put("or",      OR);
+    keywords.put("print",   PRINT);
+    keywords.put("return",  RETURN);
+    keywords.put("super",   SUPER);
+    keywords.put("this",    THIS);
+    keywords.put("true",    TRUE);
+    keywords.put("var",     VAR);
+    keywords.put("while",   WHILE);
+  }
+
   Scanner(String source) {
     this.source = source;
   }
@@ -109,6 +130,8 @@ class Scanner {
       default:
         if (isDigit(c)) {
           number();
+        } else if (isAlpha(c)) {
+          identifier();
         } else {
           /*
           * Note: we still consume the erroneous
@@ -123,6 +146,27 @@ class Scanner {
           break;
         }
     }
+  }
+
+  /*
+   * Helper function to scan an identifier Token.
+   *
+   * Consumes an entire identifier (comprised of
+   * consecutive alphanumeric characters).  If that
+   * identifier is a reserved keyword, creates a Token
+   * of the appropriate type; otherwise, creates an
+   * identifier token.
+   *
+   * Adds the created token to the Scanner's token list.
+   */
+  private void identifier() {
+    while (isAlphaNumeric(peek())) {
+      advance();
+    }
+
+    String text = this.source.substring(this.start, this.current);
+    TokenType type = keywords.getOrDefault(text, IDENTIFIER);
+    addToken(type);
   }
 
   /*
@@ -245,6 +289,34 @@ class Scanner {
     }
 
     return this.source.charAt(this.current + 1);
+  }
+
+  /*
+   * Helper function to determine if the
+   * given character is alphabetical.
+   *
+   * Treats underscore (_) as alphabetical,
+   * since underscores are valid characters
+   * in Lox identifiers.
+   *
+   * @return true if character is alphabetical,
+   *          false otherwise
+   */
+  private boolean isAlpha(char c) {
+    return (c >= 'a' && <= 'z') ||
+           (c >= 'A' && <= 'Z') ||
+           c == '_';
+  }
+
+  /*
+   * Helper function to determine if the
+   * given character is alphanumeric.
+   *
+   * @return true if the given character is
+   *          alphanumeric, false otherwise
+   */
+  private boolean isAlphaNumeric(char c) {
+    return isAlpha(c) || isDigit(c);
   }
 
   /*
