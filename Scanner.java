@@ -91,6 +91,17 @@ class Scanner {
         }
         break;
 
+      // Newlines and whitespace.
+      case '\n':
+        line++;  // flow-through intentional
+      case ' ':
+      case '\r':
+      case '\t':
+        // Ignore all whitespace; returns back to
+        // beginning of loop, creating a new lexeme.
+        break;
+
+
       
       default:
         /*
