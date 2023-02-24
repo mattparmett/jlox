@@ -31,13 +31,13 @@ class Scanner {
     while (!isAtEnd()) {
       // We are at the beginning of the next lexeme.
       // Update the lexeme start position to current position 
-      start = current;
+      this.start = this.current;
       scanToken();
     }
 
     // We are at the end of source; append EOF token
     // not strictly needed, but makes the parser cleaner.
-    tokens.add(new Token(EOF, "", null, line));
+    tokens.add(new Token(EOF, "", null, this.line));
     return tokens;
   }
 
@@ -79,6 +79,18 @@ class Scanner {
       case '>':
         addToken(match('=') ? GREATER_EQUAL : GREATER);
         break;
+      case '/':
+        // If we encounter '//', we have a comment
+        // which goes until the end of the line.
+        if (match('/')) {
+          while (peek() != '\n' && !isAtEnd()) {
+            advance();
+          }
+        } else {
+          addToken(SLASH);
+        }
+        break;
+
       
       default:
         /*
@@ -90,7 +102,7 @@ class Scanner {
          * Since hadError gets set, we will never
          * try to execute any of the errneous code.
          */
-        Lox.error(line, "Unexpected character.");
+        Lox.error(this.line, "Unexpected character.");
         break;
     }
   }
@@ -114,12 +126,28 @@ class Scanner {
       return false;
     }
 
-    if (source.charAt(current) != expected) {
+    if (this.source.charAt(this.current) != expected) {
       return false;
     }
 
-    current++;
+    this.current++;
     return true;
+  }
+
+  /*
+   * Performs a lookahead to the next character in the
+   * source code.  Does not consume the next character
+   * under any circumstances.
+   *
+   * @return next character in the source code, or
+   *          '\0' if the Scanner is at the end of the source
+   */
+  private char peek() {
+    if (isAtEnd()) {
+      return '\0';
+    }
+
+    return this.source.charAt(this.current);
   }
 
   /*
@@ -130,7 +158,7 @@ class Scanner {
    *          of source
    */
   private boolean isAtEnd() {
-    return current >= this.source.length();
+    return this.current >= this.source.length();
   }
 
   /*
@@ -144,7 +172,7 @@ class Scanner {
    *          in the source code
    */
   private char advance() {
-    return source.charAt(this.current++);
+    return this.source.charAt(this.current++);
   }
 
   /*
@@ -162,7 +190,7 @@ class Scanner {
    * the Scanner's token list.
    */
   private void addToken(TokenType type, Object literal) {
-    String text = source.substring(this.start, this.current);
+    String text = this.source.substring(this.start, this.current);
     this.tokens.add(new Token(type, text, literal, this.line));
   }
 }
