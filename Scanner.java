@@ -107,18 +107,52 @@ class Scanner {
         break;
       
       default:
-        /*
-         * Note: we still consume the erroneous
-         * character prior to the switch statement;
-         * this allows us to continue scanning the
-         * source code to find other errors, if any.
-         *
-         * Since hadError gets set, we will never
-         * try to execute any of the errneous code.
-         */
-        Lox.error(this.line, "Unexpected character.");
-        break;
+        if (isDigit(c)) {
+          number();
+        } else {
+          /*
+          * Note: we still consume the erroneous
+          * character prior to the switch statement;
+          * this allows us to continue scanning the
+          * source code to find other errors, if any.
+          *
+          * Since hadError gets set, we will never
+          * try to execute any of the errneous code.
+          */
+          Lox.error(this.line, "Unexpected character.");
+          break;
+        }
     }
+  }
+
+  /*
+   * Helper function to scan a number Token.
+   *
+   * Consumes an entire number, including any decimal
+   * portion, converts that number to a Double,
+   * and adds a NUMBER Token to the Scanner's token list.
+   */
+  private void number() {
+    // Consume all characters until we reach a non-digit.
+    while (isDigit(peek()) {
+      advance();
+    }
+
+    // Handle decimal (dot with digit to its right).
+    if (peek() == '.' && isDigit(peekNext())) {
+      // Consume the '.'
+      advance();
+
+      // Consume the decimal portion of the number
+      while (isDigit(peek()) {
+        advance();
+      }
+    }
+
+    addToken(
+      NUMBER,
+      Double.parseDouble(this.source.substring(this.start, this.current))
+    );
   }
 
   private void string() {
@@ -143,7 +177,7 @@ class Scanner {
     advance();
 
     // Trim the enclosing quotes.
-    String value = this.source.substring(start + 1, current - 1);
+    String value = this.source.substring(this.start + 1, this.current - 1);
     addToken(STRING, value);
   }
 
@@ -188,6 +222,45 @@ class Scanner {
     }
 
     return this.source.charAt(this.current);
+  }
+
+  /*
+   * Performs a two-character lookahead in the source
+   * code.  Does not consume any characters during the
+   * lookahead.
+   *
+   * Note: we implement peek() and peekNext() and do
+   * not allow peek() to take a lookahead distance
+   * parameter to make it clear to the reader that
+   * our Scanner looks ahead at most two characters.
+   *
+   * @return character located two characters ahead of
+   *          the current position in the source code,
+   *          or '\0' if Scanner would reach the end of
+   *          the source
+   */
+  private char peekNext() {
+    if (this.curent + 1 >= this.source.length()) {
+      return '\0';
+    }
+
+    return this.source.charAt(this.current + 1);
+  }
+
+  /*
+   * Helper function to determine if the
+   * given character is a digit 0-9.
+   *
+   * Note that we don't use standard
+   * Character.isDigit() because that
+   * allows a broader range of characters
+   * that do not meet Lox's definition of digits.
+   *
+   * @return true if character is a digit,
+   *          false otherwise
+   */
+  private boolean isDigit(char c) {
+    return c >= '0' && c <= '9';
   }
 
   /*
