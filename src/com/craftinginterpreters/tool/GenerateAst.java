@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GenerateAst {
+  static String indent = "  ";
+
   public static void main(String[] args) throws IOException {
     if (args.length != 1) {
       System.err.println("Usage: generate_ast <output directory>");
@@ -34,6 +36,19 @@ public class GenerateAst {
     writer.println();
     writer.println("abstract class " + baseName + " {");
 
+    /*
+     * Define the Visitor interface for Expr, used in this
+     * case to pretty print our AST.
+     *
+     * Implements the Visitor design pattern, which lets us
+     * implement a function that applies to a set of related
+     * classes in a single place; the subclasses themselves
+     * know which method of the interface to call, so we can
+     * simply pass them the interface and they will call the
+     * appropriate function on themselves.
+     */
+    defineVisitor(writer, baseName, types);
+
     // Define each of the AST subclasses.
     for (String type: types) {
       String className = type.split(":")[0].trim();
@@ -41,13 +56,16 @@ public class GenerateAst {
       defineType(writer, baseName, className, fields);
     }
 
+    // Define the abstract accept() method for the Visitor interface.
+    writer.println();
+    writer.println(indent + "abstract <R> R accept(Visitor<R> visitor);");
+
     writer.println("}");
     writer.close();
   }
 
   private static void defineType(
       PrintWriter writer, String baseName, String className, String fieldList) {
-    String indent = "  ";
 
     // Define class.
     writer.println(
@@ -69,6 +87,16 @@ public class GenerateAst {
     // End constructor.
     writer.println(indent + indent + "}");
 
+    // Implement the appropriate visit method for the Visitor interface.
+    writer.println();
+    writer.println(indent + indent + "@Override");
+    writer.println(indent + indent + "<R> R accept(Visitor<R> visitor) {");
+    writer.println(
+      indent + indent + indent +
+      "return visitor.visit" + className + baseName + "(this);"
+    );
+    writer.println(indent + indent + "}");
+
     // Define fields.
     writer.println();
     for (String field : fields) {
@@ -76,6 +104,24 @@ public class GenerateAst {
     }
 
     // End class.
+    writer.println(indent + "}");
+    writer.println();
+  }
+
+  private static void defineVisitor(
+      PrintWriter writer, String baseName, List<String> types) {
+    writer.println(indent + "interface Visitor<R> {");
+
+    // Define "visit" interface method for each subtype.
+    for (String type: types) {
+      String typeName = type.split(":")[0].trim();
+      writer.println(
+        indent + indent + "R visit" + typeName + baseName + "(" +
+        typeName + " " + baseName.toLowerCase() + ");"
+      );
+    }
+
+    // End visitor interface.
     writer.println(indent + "}");
     writer.println();
   }
