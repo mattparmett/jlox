@@ -49,6 +49,10 @@ public class GenerateAst {
      */
     defineVisitor(writer, baseName, types);
 
+    // Define the abstract accept() method for the Visitor interface.
+    writer.println(indent + "abstract <R> R accept(Visitor<R> visitor);");
+    writer.println();
+
     // Define each of the AST subclasses.
     for (String type: types) {
       String className = type.split(":")[0].trim();
@@ -56,13 +60,10 @@ public class GenerateAst {
       defineType(writer, baseName, className, fields);
     }
 
-    // Define the abstract accept() method for the Visitor interface.
-    writer.println();
-    writer.println(indent + "abstract <R> R accept(Visitor<R> visitor);");
-
     writer.println("}");
     writer.close();
   }
+
 
   private static void defineType(
       PrintWriter writer, String baseName, String className, String fieldList) {
@@ -72,11 +73,17 @@ public class GenerateAst {
       indent + "static class " + className + " extends " + baseName + " {"
     );
 
+    // Define fields.
+    String[] fields = fieldList.split(", ");
+    for (String field : fields) {
+      writer.println(indent + indent + "final " + field + ";");
+    }
+
     // Define constructor.
+    writer.println();
     writer.println(indent + indent + className + "(" + fieldList + ") {");
 
     // Store each parameter for the class in a field.
-    String[] fields = fieldList.split(", ");
     for (String field : fields) {
       String name = field.split(" ")[1];
       writer.println(
@@ -97,11 +104,6 @@ public class GenerateAst {
     );
     writer.println(indent + indent + "}");
 
-    // Define fields.
-    writer.println();
-    for (String field : fields) {
-      writer.println(indent + indent + "final " + field + ";");
-    }
 
     // End class.
     writer.println(indent + "}");
