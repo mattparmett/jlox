@@ -10,12 +10,22 @@ import java.util.List;
 
 public class Lox {
   /*
+   * The main Lox interpreter.
+   * Static so that successive calls to run()
+   * inside a REPL session reuse the same interpreter,
+   * preserving global variables that should persist
+   * throughout the REPL session.
+   */
+  private static final Interpreter interpreter = new Interpreter();
+
+  /*
    * Ensures we don't try to execute code
    * that has a known error, and lets us
    * exit with an appropriate exit code
    * if an error occurred.
    */
   static boolean hadError = false;
+  static boolean hadRuntimeError = false;
 
   public static void main(String[] args) throws IOException {
     if (args.length > 1) {
@@ -38,9 +48,8 @@ public class Lox {
   public static void runFile(String path) throws IOException {
     byte[] bytes = Files.readAllBytes(Paths.get(path));
     run(new String(bytes, Charset.defaultCharset()));
-    if (hadError) {
-      System.exit(65);
-    }
+    if (hadError) System.exit(65);
+    if (hadRuntimeError) System.exit(70);
   }
 
   /*
@@ -88,7 +97,7 @@ public class Lox {
     // Stop if there is a syntax error
     if (hadError) return;
 
-    System.out.println(new AstPrinter().print(expression));
+    interpreter.interpret(expression);
   }
 
   /*
@@ -101,6 +110,21 @@ public class Lox {
    */
   static void error(int line, String message) {
     report(line, "", message);
+  }
+
+  /*
+   * Reports an error at a given token, showing the
+   * token's location and the token itself.
+   * 
+   * @param token Token at which the error occurred
+   * @param message Human-readable error message
+   */
+  static void error(Token token, String message) {
+    if (token.type == TokenType.EOF) {
+      report(token.line, " at end", message);
+    } else {
+      report(token.line, " at '"  + token.lexeme + "'", message);
+    }
   }
 
   /*
@@ -118,17 +142,14 @@ public class Lox {
   }
 
   /*
-   * Reports an error at a given token, showing the
-   * token's location and the token itself.
-   * 
-   * @param token Token at which the error occurred
-   * @param message Human-readable error message
+   * Reports the given runtime error to the user.
+   * Sets the hadRuntimeError flag to ensure the appropriate
+   * exit code is reported on termination.
    */
-  static void error(Token token, String message) {
-    if (token.type == TokenType.EOF) {
-      report(token.line, " at end", message);
-    } else {
-      report(token.line, " at '"  + token.lexeme + "'", message);
-    }
+  static void runtimeError(RuntimeError error) {
+    System.err.println(error.getMessage() +
+      "\n[line " + error.token.line + "]");
+    hadRuntimeError = true;
   }
+
 }
