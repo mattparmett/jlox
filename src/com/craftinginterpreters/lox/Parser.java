@@ -112,6 +112,37 @@ class Parser {
   }
 
   /*
+   * Parses a variable assignment by parsing the
+   * left hand side (which can be any expression
+   * of higher precedence); if we find an '=',
+   * we parse the RHS and return an assignment expression
+   * tree node.
+   * 
+   * We parse the LHS as if it were an expression,
+   * and if we see an equals sign we can perform
+   * an assignment to it.
+   */
+  private Expr assignment() {
+    Expr expr = equality();
+
+    if (match(EQUAL)) {
+      Token equals = previous();
+      Expr value = assignment();
+
+      if (expr instanceof Expr.Variable) {
+        Token name = ((Expr.Variable)expr).name;
+        return new Expr.Assign(name, value);
+      }
+
+      // Report but don't throw, since we don't need
+      // to synchronize the parser.
+      error(equals, "Invalid assingment target.");
+    }
+
+    return expr;
+  }
+
+  /*
    * Expression matches any expression
    * at any precedence level.
    *
@@ -120,7 +151,7 @@ class Parser {
    * higher precedence.
    */
   private Expr expression() {
-    return equality();
+    return assignment();
   }
 
   /*
