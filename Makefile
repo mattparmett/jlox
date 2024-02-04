@@ -5,7 +5,8 @@ RMFLAGS = -r
 SRC_DIR = src/com/craftinginterpreters/lox/
 TOOL_DIR = src/com/craftinginterpreters/tool/
 OUTPUT_DIR = bin/
-AST_SRC_DIR = $(SRC_DIR)Expr.java
+AST_EXPR_SRC_DIR = $(SRC_DIR)Expr.java
+AST_STMT_SRC_DIR = $(SRC_DIR)Stmt.java
 
 JLOX_BIN = com.craftinginterpreters.lox.Lox
 AST_BIN = com.craftinginterpreters.tool.GenerateAst
@@ -28,6 +29,6 @@ clean:
 	$(RM) $(RMFLAGS) $(OUTPUT_DIR)*
 
 clean_ast:
-	$(RM) $(RMFLAGS) $(AST_SRC_DIR)
+	$(RM) $(RMFLAGS) $(AST_EXPR_SRC_DIR) $(AST_STMT_SRC_DIR)
 
 clobber: clean clean_ast
