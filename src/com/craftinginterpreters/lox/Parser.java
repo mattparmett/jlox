@@ -28,7 +28,7 @@ class Parser {
   List<Stmt> parse() {
     List<Stmt> statements = new ArrayList<>();
     while (!isAtEnd()) {
-      statements.add(statement());
+      statements.add(declaration());
     }
 
     return statements;
@@ -38,6 +38,45 @@ class Parser {
    * Parser Rules
    * Implemented in ascending order of precedence.
    */
+
+  /*
+   * Parses a declaration.  If the current token
+   * is the "var" keyword, treats the following token
+   * as a declaration.  Otherwise, falls through to
+   * statement.
+   * 
+   * If we encounter a parse error, catches the
+   * error and synchronizes the parser so it
+   * can continue parsing at the next declaration.
+   */
+  private Stmt declaration() {
+    try {
+      if (match(VAR)) return varDeclaration();
+      return statement();
+    } catch (ParseError error) {
+      synchronize();
+      return null;
+    }
+  }
+
+  /*
+   * Parses a variable declaration.
+   * Note that it is optional to initialize
+   * variables when they are declared.
+   */
+  private Stmt varDeclaration() {
+    // We have already parsed the "var" keyword, so the
+    // next token should be a variable name
+    Token name = consume(IDENTIFIER, "Expect variable name.");
+
+    Expr initializer = null;
+    if (match(EQUAL)) {
+      initializer = expression();
+    }
+
+    consume(SEMICOLON, "Expect ';' after variable declaration.");
+    return new Stmt.Var(name, initializer);
+  }
 
   /*
    * Statement can be an expression or a print statement.
@@ -190,6 +229,10 @@ class Parser {
 
     if (match(NUMBER, STRING)) {
       return new Expr.Literal(previous().literal);
+    }
+
+    if (match(IDENTIFIER)) {
+      return new Expr.Variable(previous());
     }
 
     /*
