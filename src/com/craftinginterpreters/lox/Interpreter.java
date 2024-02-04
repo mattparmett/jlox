@@ -1,22 +1,55 @@
 package com.craftinginterpreters.lox;
 
-class Interpreter implements Expr.Visitor<Object> {
+import java.util.List;
+
+class Interpreter implements Expr.Visitor<Object>,
+                             Stmt.Visitor<Void> {
     /*
      * Accepts a syntax tree for an expression and
-     * evaluates it, returning the string representation
-     * of the result Object returned by evaluate().
+     * evaluates it.
      * 
      * If the evaluation is not successful,
      * reports a runtime error to the user.
      */
-    void interpret(Expr expression) {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
     }
+
+    /*
+     * Visitor methods for Stmt
+     */
+
+    /*
+     * Evaluates an expression statement.
+     * Statements produce no values, so return type is void.
+     */
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);  // discard value
+        return null;
+    }
+
+    /*
+     * Evaluates a print statement by evaluating
+     * the inner expression, converting it to string,
+     * and printing to stdout.
+     */
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
+    }
+
+    /*
+     * Visitor methods for Expr
+     */
 
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
@@ -44,64 +77,6 @@ class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
-    /*
-     * Checks whether the given operand is a number (Double),
-     * and throws a Lox RuntimeError if not.
-     * 
-     * Can be used to guard casts and evaluations that require
-     * one or more numeric operators.
-     */
-    private void checkNumberOperand(Token operator, Object operand) {
-        if (operand instanceof Double) return;
-        throw new RuntimeError(operator, "Operand must be a number.");
-    }
-
-    private void checkNumberOperands(Token operator, Object left, Object right) {
-        if (left instanceof Double && right instanceof Double) return;
-        throw new RuntimeError(operator, "Operands must be numbers.");
-    }
-
-    /*
-     * Determines whether the given object is
-     * truthy or falsey.
-     * 
-     * Treats false and nil as falsey, and everything
-     * else as truthy.
-     */
-    private boolean isTruthy(Object object) {
-        if (object == null) return false;
-        if (object instanceof Boolean) return (boolean)object;
-        return true;
-    }
-
-    /*
-     * Determines whether two objects are equal,
-     * according to Lox's definition.
-     */
-    private boolean isEqual(Object a, Object b) {
-        if (a == null && b == null) return true;
-        if (a == null) return false;
-        return a.equals(b);
-    }
-
-    private String stringify(Object object) {
-        if (object == null) return "nil";
-
-        if (object instanceof Double) {
-            String text = object.toString();
-            
-            // We use doubles internally to represent Lox ints;
-            // need to chop off Java's trailing decimal.
-            if (text.endsWith(".0")) {
-                text = text.substring(0, text.length() - 2);
-            }
-
-            return text;
-        }
-
-        return object.toString();
-    }
-
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         /*
@@ -113,14 +88,6 @@ class Interpreter implements Expr.Visitor<Object> {
          * the interpreter.
          */
         return evaluate(expr.expression);
-    }
-
-    /*
-     * Helper method that sends an expression
-     * back into the interpreter's visitor.
-     */
-    private Object evaluate(Expr expr) {
-        return expr.accept(this);
     }
 
     @Override
@@ -179,4 +146,83 @@ class Interpreter implements Expr.Visitor<Object> {
         // Unreachable
         return null;
     }
+
+    /*
+     * Helper methods
+     */
+
+    /*
+     * Helper method that sends a statement
+     * back into the interpreter's visitor.
+     */
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+    /*
+     * Helper method that sends an expression
+     * back into the interpreter's visitor.
+     */
+    private Object evaluate(Expr expr) {
+        return expr.accept(this);
+    }
+
+    /*
+     * Determines whether the given object is
+     * truthy or falsey.
+     * 
+     * Treats false and nil as falsey, and everything
+     * else as truthy.
+     */
+    private boolean isTruthy(Object object) {
+        if (object == null) return false;
+        if (object instanceof Boolean) return (boolean)object;
+        return true;
+    }
+
+    /*
+     * Checks whether the given operand is a number (Double),
+     * and throws a Lox RuntimeError if not.
+     * 
+     * Can be used to guard casts and evaluations that require
+     * one or more numeric operators.
+     */
+    private void checkNumberOperand(Token operator, Object operand) {
+        if (operand instanceof Double) return;
+        throw new RuntimeError(operator, "Operand must be a number.");
+    }
+
+    private void checkNumberOperands(Token operator, Object left, Object right) {
+        if (left instanceof Double && right instanceof Double) return;
+        throw new RuntimeError(operator, "Operands must be numbers.");
+    }
+
+    /*
+     * Determines whether two objects are equal,
+     * according to Lox's definition.
+     */
+    private boolean isEqual(Object a, Object b) {
+        if (a == null && b == null) return true;
+        if (a == null) return false;
+        return a.equals(b);
+    }
+
+    private String stringify(Object object) {
+        if (object == null) return "nil";
+
+        if (object instanceof Double) {
+            String text = object.toString();
+            
+            // We use doubles internally to represent Lox ints;
+            // need to chop off Java's trailing decimal.
+            if (text.endsWith(".0")) {
+                text = text.substring(0, text.length() - 2);
+            }
+
+            return text;
+        }
+
+        return object.toString();
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.ArrayList;
 import static com.craftinginterpreters.lox.TokenType.*;
 
 class Parser {
@@ -22,18 +23,15 @@ class Parser {
   }
 
   /*
-   * Initial method to begin parsing.
-   * 
-   * Parses a single expression and returns it.
+   * Parses a program into a list of statements.
    */
-  Expr parse() {
-    try {
-      return expression();
-    } catch (ParseError error) {
-      // Temporary code to catch & exit from panic mode
-      // We don't return a usable syntax tree if an error is found
-      return null;
+  List<Stmt> parse() {
+    List<Stmt> statements = new ArrayList<>();
+    while (!isAtEnd()) {
+      statements.add(statement());
     }
+
+    return statements;
   }
 
   /*
@@ -41,6 +39,38 @@ class Parser {
    * Implemented in ascending order of precedence.
    */
 
+  /*
+   * Statement can be an expression or a print statement.
+   * If the next token doesn't look like a known statement,
+   * we assume it is an expression statement.
+   */
+  private Stmt statement() {
+    if (match(PRINT)) return printStatement();
+    return expressionStatement();
+  }
+
+  /*
+   * Parses the expression after the print
+   * token, consumes the terminating semicolon,
+   * and returns the syntax tree.
+   */
+  private Stmt printStatement() {
+    // Note: we have already matched and consumed
+    // the print token before getting here
+    Expr value = expression();
+    consume(SEMICOLON, "Expect ';' after value.");
+    return new Stmt.Print(value);
+  }
+
+  /*
+   * Parses an expression and consumes the terminating
+   * semicolon, returning the syntax tree.
+   */
+  private Stmt expressionStatement() {
+    Expr expr = expression();
+    consume(SEMICOLON, "Expect ';' after expression.");
+    return new Stmt.Expression(expr);
+  }
 
   /*
    * Expression matches any expression
