@@ -22,6 +22,23 @@ class Environment {
     }
 
     /*
+     * Updates an assignment in the environment.
+     * Throws a RuntimeError if the given token
+     * is not currently stored in the environment.
+     */
+    void assign(Token name, Object value) {
+        if (values.containsKey(name.lexeme)) {
+            values.put(name.lexeme, value);
+            return;
+        }
+
+        throw new RuntimeError(
+            name,
+            "Undefined variable '" + name.lexeme + "'."
+        );
+    }
+
+    /*
      * Retrieves a variable value from the
      * environment.
      * 

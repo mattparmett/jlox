@@ -88,6 +88,17 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     /*
+     * Evaluates an assignment expression and
+     * updates the binding in the environment.
+     */
+    @Override
+    public Object visitAssignExpr(Expr.Assign expr) {
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
+    }
+
+    /*
      * Evaluates a unary expression by first
      * evaluating the operand, then applying
      * the unary operator to the operand.
