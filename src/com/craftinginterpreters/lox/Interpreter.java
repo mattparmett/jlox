@@ -4,6 +4,11 @@ import java.util.List;
 
 class Interpreter implements Expr.Visitor<Object>,
                              Stmt.Visitor<Void> {
+    
+    // Environment stores variable bindings
+    // Stays in memory as long as interpreter is running
+    private Environment environment = new Environment();
+
     /*
      * Accepts a syntax tree for an expression and
      * evaluates it.
@@ -48,12 +53,38 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     /*
+     * Evaluates a variable declaration
+     * and stores the new binding in the
+     * environment.
+     * 
+     * If an initializer is provided, the variable
+     * is set to the value of the evaluated
+     * initializer.  Otherwise, the variable
+     * is initialized with a value of nil.
+     */
+    @Override
+    public Void visitVarStmt(Stmt.Var stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    /*
      * Visitor methods for Expr
      */
 
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
     }
 
     /*
