@@ -84,9 +84,37 @@ class Parser {
    * we assume it is an expression statement.
    */
   private Stmt statement() {
+    if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
     if (match(LEFT_BRACE)) return new Stmt.Block(block());
     return expressionStatement();
+  }
+
+  /*
+   * Parses an If statement.
+   * Detects an else clause via the "else" keyword.
+   * 
+   * Note: we bind "else" statements to the nearest
+   * (innermost) "if" statement preceding the else,
+   * since we greedily look forward for an "else"
+   * clause each time we encounter an "if" clause.
+   *
+   * Returns the syntax tree for the If statement.
+   */
+  private Stmt ifStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr condition = expression();
+    consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+    Stmt thenBranch = statement();
+
+    Stmt elseBranch = null;
+    if (match(ELSE)) {
+      elseBranch = statement();
+    }
+
+    return new Stmt.If(condition, thenBranch, elseBranch);
+
   }
 
   /*

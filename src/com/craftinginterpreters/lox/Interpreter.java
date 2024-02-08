@@ -29,7 +29,28 @@ class Interpreter implements Expr.Visitor<Object>,
     /*
      * Visitor methods for Stmt
      */
+    
+    /*
+     * Interprets an if/else statement.
+     * If the if condition is true, executes the "then"
+     * branch of the statement, otherwise executes
+     * the "else" branch, if it exists.
+     */
+    public Void visitIfStmt(Stmt.If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
 
+        return null;
+    }
+
+
+    /*
+     * Interprets a block by executing the block's
+     * statements in a newly-scoped environment.
+     */
     public Void visitBlockStmt(Stmt.Block stmt) {
         executeBlock(stmt.statements, new Environment(environment));
         return null;
