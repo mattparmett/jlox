@@ -5,11 +5,31 @@ import java.util.Map;
 
 class Environment {
     /*
+     * Stores a reference to the Environment
+     * that is immediately closing this Environment.
+     * 
+     * Used for lexical scoping; we first look up
+     * identifiers in this Environment, and if not found,
+     * we expand our search to the enclosing Environment.
+     */
+    final Environment enclosing;
+
+    /*
      * Stores variable bindings.
      * Note: keys are strings so that all identifier
      * tokens with the same name refer to the same variable.
      */
     private final Map<String, Object> values = new HashMap<>();
+
+    // Use this constructor for the global Environment,
+    // which should have no enclosing Environment.
+    Environment() {
+        enclosing = null;
+    }
+
+    Environment(Environment enclosing) {
+        this.enclosing = enclosing;
+    }
 
     /*
      * Stores a variable binding.
@@ -23,12 +43,21 @@ class Environment {
 
     /*
      * Updates an assignment in the environment.
+     * If the variable isn't in this environment,
+     * tries to update the variable in the enclosing
+     * environment.
+     * 
      * Throws a RuntimeError if the given token
      * is not currently stored in the environment.
      */
     void assign(Token name, Object value) {
         if (values.containsKey(name.lexeme)) {
             values.put(name.lexeme, value);
+            return;
+        }
+
+        if (enclosing != null) {
+            enclosing.assign(name, value);
             return;
         }
 
@@ -40,10 +69,13 @@ class Environment {
 
     /*
      * Retrieves a variable value from the
-     * environment.
+     * environment.  If the variable is not
+     * found in this environment, we try to
+     * find it in the enclosing environment.
      * 
      * Throws a RuntimeError if the variable
-     * is not found.  Therefore, it is OK
+     * is not found and there is no enclosing
+     * environment.  Therefore, it is OK
      * to reference a variable before it is
      * defined as long as that reference
      * is not evaluated.
@@ -52,6 +84,8 @@ class Environment {
         if (values.containsKey(name.lexeme)) {
             return values.get(name.lexeme);
         }
+
+        if (enclosing != null) return enclosing.get(name);
 
         throw new RuntimeError(
             name,
