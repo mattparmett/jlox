@@ -30,6 +30,11 @@ class Interpreter implements Expr.Visitor<Object>,
      * Visitor methods for Stmt
      */
 
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
     /*
      * Evaluates an expression statement.
      * Statements produce no values, so return type is void.
@@ -199,6 +204,28 @@ class Interpreter implements Expr.Visitor<Object>,
      */
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    /*
+     * Executes a list of statements in the context of
+     * the given environment (scope).
+     * 
+     * Updates the interpreter's environment to the given
+     * environment, visits all of the statements in the block,
+     * and then resets the interpreter's environment to the
+     * previous state.
+     */
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            // Reset the environment even if exception is thrown
+            this.environment = previous;
+        }
     }
 
     /*
