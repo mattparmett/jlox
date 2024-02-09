@@ -46,6 +46,18 @@ class Interpreter implements Expr.Visitor<Object>,
         return null;
     }
 
+    /*
+     * Interprets a while statement, executing the
+     * while's body while the condition is true.
+     */
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+
+        return null;
+    }
 
     /*
      * Interprets a block by executing the block's
@@ -115,7 +127,7 @@ class Interpreter implements Expr.Visitor<Object>,
      */
     @Override
     public Object visitLogicalExpr(Expr.Logical expr) {
-        Object left = evaluate(expr.left)
+        Object left = evaluate(expr.left);
 
         if (expr.operator.type == TokenType.OR) {
             // If left is truthy, then whole OR expression
