@@ -1,6 +1,7 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.ArrayList;
 
 class Interpreter implements Expr.Visitor<Object>,
                              Stmt.Visitor<Void> {
@@ -253,6 +254,43 @@ class Interpreter implements Expr.Visitor<Object>,
 
         // Unreachable
         return null;
+    }
+
+    /*
+     * Interprets a Call expression.
+     *
+     * Evaluates the callee (typically a function identifier,
+     * but could be anything) and evaluates each argument.
+     * 
+     * Then, performs the function call with the given args.
+     */
+    @Override
+    public Object visitCallExpr(Expr.Call expr) {
+        // Callee will usually be an identifier
+        // (function name lookup), but could be anything
+        Object callee = evaluate(expr.callee);
+        if (!(callee instanceof LoxCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+        }
+
+
+        // Interpret the arguments
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        LoxCallable function = (LoxCallable)callee;
+
+        // Validate the correct number of args were passed
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(
+                expr.paren,
+                "Expected " + function.arity() + " arguments but got " +
+                arguments.size() + " .");
+        }
+
+        return function.call(this, arguments);
     }
 
     /*

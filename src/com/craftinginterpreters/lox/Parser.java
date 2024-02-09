@@ -418,7 +418,7 @@ class Parser {
         if (arguments.size() >= 255) {
           error(peek(), "Call can't have more than 255 arguments.");
         }
-        arguments.add(expression())
+        arguments.add(expression());
       } while(match(COMMA));
     }
 
