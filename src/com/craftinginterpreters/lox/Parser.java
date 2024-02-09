@@ -1,5 +1,6 @@
 package com.craftinginterpreters.lox;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.ArrayList;
 import static com.craftinginterpreters.lox.TokenType.*;
@@ -84,6 +85,7 @@ class Parser {
    * we assume it is an expression statement.
    */
   private Stmt statement() {
+    if (match(FOR)) return forStatement();
     if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
     if (match(WHILE)) return whileStatement();
@@ -143,6 +145,51 @@ class Parser {
     Stmt body = statement();
 
     return new Stmt.While(condition, body);
+  }
+
+  private Stmt forStatement() {
+    consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+    // Initializer: can be a declaration, an expression, or omitted
+    Stmt initializer;
+    if (match(SEMICOLON)) {
+      initializer = null;
+    } else if (match(VAR)) {
+      initializer = varDeclaration();
+    } else {
+      initializer = expressionStatement();
+    }
+
+    // Condition: can be an expression, or omitted
+    Expr condition = (check(SEMICOLON)) ? null : expression();
+    consume(SEMICOLON, "Expect ';' after loop condition.");
+
+    // Incrementer: can be an expression, or omitted
+    Expr increment = (check(RIGHT_PAREN)) ? null : expression();
+    consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    // Loop body
+    Stmt body = statement();
+
+    // Desugar: insert the increment at end of loop body
+    if (increment != null) {
+      Stmt.Expression incrementExpr = new Stmt.Expression(increment);
+      body = new Stmt.Block(Arrays.asList(body, incrementExpr));
+    }
+
+    // Desugar: transform for loop into while loop with condition
+    if (condition == null) {
+      condition = new Expr.Literal(true);
+    }
+
+    body = new Stmt.While(condition, body);
+
+    // Desugar: insert initializer before while loop
+    if (initializer != null) {
+      body = new Stmt.Block(Arrays.asList(initializer, body));
+    }
+
+    return body;
   }
 
   /*
