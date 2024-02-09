@@ -381,7 +381,49 @@ class Parser {
       return new Expr.Unary(operator, right);
     }
     
-    return primary();
+    return call();
+  }
+
+  private Expr call() {
+    // Parse the left operand of the call: the callee
+    Expr expr = primary();
+
+    // Each time we see a left paren, parse the call
+    // expression using the previously parsed expression
+    // as the callee.  Allows for func(1)(2) calls, etc.
+    while (true) {
+      if (match(LEFT_PAREN)) {
+        expr = finishCall(expr);
+      } else {
+        break;
+      }
+    }
+
+    return expr;
+  }
+
+  /*
+   * Parses a Call expression with the given callee;
+   * essentially parses the arguments of the function call
+   * and returns the syntax tree for the entire Call.
+   */
+  private Expr finishCall(Expr callee) {
+    List<Expr> arguments = new ArrayList<>();
+    
+    // Only parse args if they exist (don't have empty parens)
+    if (!check(RIGHT_PAREN)) {
+      do {
+        // Limit calls to 255 arguments (mainly for compat with bytecode interpreter)
+        // Note: reports error, does not throw (we aren't in confused state)
+        if (arguments.size() >= 255) {
+          error(peek(), "Call can't have more than 255 arguments.");
+        }
+        arguments.add(expression())
+      } while(match(COMMA));
+    }
+
+    Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+    return new Expr.Call(callee, paren, arguments);
   }
 
   private Expr primary() {
