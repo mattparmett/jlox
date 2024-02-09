@@ -169,7 +169,7 @@ class Parser {
    * an assignment to it.
    */
   private Expr assignment() {
-    Expr expr = equality();
+    Expr expr = or();
 
     if (match(EQUAL)) {
       Token equals = previous();
@@ -191,13 +191,44 @@ class Parser {
   /*
    * Expression matches any expression
    * at any precedence level.
-   *
-   * Since Equality has the lowest precedence,
-   * we can match that and cover everything with
-   * higher precedence.
    */
   private Expr expression() {
     return assignment();
+  }
+
+  /*
+   * Parses a logical OR expression,
+   * treating each operand as an AND
+   * expression per the formal grammar.
+   */
+  private Expr or() {
+    Expr expr = and();
+
+    while (match(OR)) {
+      Token operator = previous();
+      Expr right = and();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+
+    return expr;
+  }
+
+  /*
+   * Parses a logical AND expression,
+   * which has higher precedence over OR.
+   * Treats each operand as an equality,
+   * per the formal grammar.
+   */
+  private Expr and() {
+    Expr expr = equality();
+
+    while (match(AND)) {
+      Token operator = previous();
+      Expr right = equality();
+      expr = new Expr.Logical(expr, operator, right);
+    }
+
+    return expr;
   }
 
   /*

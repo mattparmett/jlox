@@ -103,6 +103,34 @@ class Interpreter implements Expr.Visitor<Object>,
      * Visitor methods for Expr
      */
 
+    /*
+     * Interprets a logical AND/OR expression.
+     * Short circuits an OR expression if the left
+     * operand is truthy, and short circuits an AND
+     * expression if the right operand is falsy.
+     * 
+     * Returns a value with appropriate truthiness,
+     * but the return value is not guaranteed to
+     * be a boolean true/false.
+     */
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        Object left = evaluate(expr.left)
+
+        if (expr.operator.type == TokenType.OR) {
+            // If left is truthy, then whole OR expression
+            // evaluates to true
+            if (isTruthy(left)) return left;
+        } else {
+            // If this is an AND expression
+            // and left is falsy, the whole AND
+            // expression evaluates to false
+            if (!isTruthy(left)) return left;
+        }
+
+        return evaluate(expr.right);
+    }
+
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
