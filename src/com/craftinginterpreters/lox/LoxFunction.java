@@ -31,9 +31,18 @@ class LoxFunction implements LoxCallable {
             environment.define(declaration.params.get(i).lexeme, arguments.get(i));
         }
 
-        // executeBlock automatically restores previous environment
-        // that was active when function was called
-        interpreter.executeBlock(declaration.body, environment);
-        return null;  // TODO: add return values
+        try {
+            // executeBlock automatically restores previous environment
+            // that was active when function was called
+            interpreter.executeBlock(declaration.body, environment);
+        } catch (Return returnValue) {
+            // If the function returns a value, it will be passed back
+            // to us via a Return exception, which unwinds the call stack
+            return returnValue.value;
+        }
+        
+        // Function did not return a value
+        // Implicitly reutrn nil
+        return null;
     }
 }

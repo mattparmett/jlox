@@ -89,6 +89,7 @@ class Parser {
     if (match(FOR)) return forStatement();
     if (match(IF)) return ifStatement();
     if (match(PRINT)) return printStatement();
+    if (match(RETURN)) return returnStatement();
     if (match(WHILE)) return whileStatement();
     if (match(LEFT_BRACE)) return new Stmt.Block(block());
     return expressionStatement();
@@ -132,6 +133,17 @@ class Parser {
     Expr value = expression();
     consume(SEMICOLON, "Expect ';' after value.");
     return new Stmt.Print(value);
+  }
+
+  /*
+   * Parses a return statement, which may optionally
+   * have a return value.
+   */
+  private Stmt returnStatement() {
+    Token keyword = previous();
+    Expr value = check(SEMICOLON) ? null : expression();
+    consume(SEMICOLON, "Expect ';' after return value.");
+    return new Stmt.Return(keyword, value);
   }
 
   /*

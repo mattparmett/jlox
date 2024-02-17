@@ -120,6 +120,21 @@ class Interpreter implements Expr.Visitor<Object>,
     }
 
     /*
+     * Evaluates a return statement.  If there
+     * is a return value, we evaluate it; otherwise
+     * we use nil.
+     *
+     * Throws an exception to unwind the call stack
+     * all the way to the initial call() that called
+     * the callable from which we are returning.
+     */
+    @Override
+    public Void visitReturnStmt(Stmt.Return stmt) {
+        Object value = (stmt.value == null) ? null : evaluate(stmt.value);
+        throw new Return(value);
+    }
+
+    /*
      * Evaluates a variable declaration
      * and stores the new binding in the
      * environment.
