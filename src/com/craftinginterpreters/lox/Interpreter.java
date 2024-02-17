@@ -86,8 +86,26 @@ class Interpreter implements Expr.Visitor<Object>,
      * Interprets a block by executing the block's
      * statements in a newly-scoped environment.
      */
+    @Override
     public Void visitBlockStmt(Stmt.Block stmt) {
         executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    /*
+     * Interprets a class declaration by declaring
+     * the class's name in the current environment,
+     * then turning the class syntax node into the runtime
+     * representation of a class.
+     * 
+     * Two-stage binding process allows a class to reference
+     * itself inside its own methods.
+     */
+    @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+        LoxClass klass = new LoxClass(stmt.name.lexeme);
+        environment.assign(stmt.name, klass);
         return null;
     }
 
