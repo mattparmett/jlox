@@ -8,7 +8,24 @@ class Interpreter implements Expr.Visitor<Object>,
     
     // Environment stores variable bindings
     // Stays in memory as long as interpreter is running
-    private Environment environment = new Environment();
+    final Environment globals = new Environment();
+    private Environment environment = globals();
+
+    Interpreter() {
+        // Defines a native clock function
+        globals.define("clock", new LoxCallable() {
+            @Override
+            public int arity() { return 0; }
+
+            @Override
+            public Object call(Interpreter interpreter, List<Object> arguments) {
+                return (double)System.currentTimeMillis / 1000.0;
+            }
+
+            @Override
+            public String toString() { return "<native fn>"; }
+        });
+    }
 
     /*
      * Accepts a syntax tree for an expression and
