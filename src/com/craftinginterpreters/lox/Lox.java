@@ -88,15 +88,25 @@ public class Lox {
    * @param source Lox source code to execute
    */
   private static void run(String source) {
+    // Scanner pass
     Scanner scanner = new Scanner(source);
     List<Token> tokens = scanner.scanTokens();
 
+    // Parser pass
     Parser parser = new Parser(tokens);
     List<Stmt> statements = parser.parse();
 
-    // Stop if there is a syntax error
+    // Stop if there is a syntax error in parser
     if (hadError) return;
 
+    // Resolver pass
+    Resolver resolver = new Resolver(interpreter);
+    resolver.resolve(statements);
+
+    // Stop if there is an error in the resolver
+    if (hadError) return;
+
+    // Interpreter pass
     interpreter.interpret(statements);
   }
 

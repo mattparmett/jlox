@@ -1,7 +1,9 @@
 package com.craftinginterpreters.lox;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 class Interpreter implements Expr.Visitor<Object>,
                              Stmt.Visitor<Void> {
@@ -10,6 +12,9 @@ class Interpreter implements Expr.Visitor<Object>,
     // Stays in memory as long as interpreter is running
     final Environment globals = new Environment();
     private Environment environment = globals;
+    
+    // "Side table" to store the variable scoping levels
+    private final Map<Expr, Integer> locals = new HashMap<>();
 
     Interpreter() {
         // Defines a native clock function
@@ -196,17 +201,43 @@ class Interpreter implements Expr.Visitor<Object>,
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
-        return environment.get(expr.name);
+        return lookUpVariable(expr.name, expr);
+    }
+
+    /*
+     * Retrieves a variable from the appropriate scope.
+
+     * If the variable is stored in the locals table,
+     * retrieves the variable from the appropriate environment.
+     * 
+     * Otherwise, assumes the variable must be global and
+     * retrieves it from the global environment.
+     * 
+     * If the variable is not declared in the global environment,
+     * a runtime error will be thrown (the variable is not defined).
+     */
+    private Object lookUpVariable(Token name, Expr expr) {
+        Integer distance = locals.get(expr);
+        return (distance == null)
+            ? globals.get(name)
+            : environment.getAt(distance, name.lexeme);
     }
 
     /*
      * Evaluates an assignment expression and
-     * updates the binding in the environment.
+     * updates the binding in the appropriate environment.
      */
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
         Object value = evaluate(expr.value);
-        environment.assign(expr.name, value);
+        
+        Integer distance = locals.get(expr);
+        if (distance != null) {
+            environment.assignAt(distance, expr.name, value);
+        } else {
+            globals.assign(expr.name, value);
+        }
+
         return value;
     }
 
@@ -348,6 +379,10 @@ class Interpreter implements Expr.Visitor<Object>,
      */
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    void resolve(Expr expr, int depth) {
+        locals.put(expr, depth);
     }
 
     /*

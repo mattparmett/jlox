@@ -42,6 +42,35 @@ class Environment {
     }
 
     /*
+     * Retrieves the enclosing environment
+     * [distance] scopes outside of the current.
+     */
+    Environment ancestor(int distance) {
+        Environment environment = this;
+        while (distance-- > 0) environment = environment.enclosing;
+        return environment;
+    }
+
+    /*
+     * Retrieves a variable in the environment
+     * [distance] scopes outside of the current.
+     * 
+     * No need to check if the variable exists,
+     * because the resolver pass already found it.
+     */
+    Object getAt(int distance, String name) {
+        return ancestor(distance).values.get(name);
+    }
+
+    /*
+     * Inserts a variable into the environment
+     * [distance] scopes outside of the current.
+     */
+    void assignAt(int distance, Token name, Object value) {
+        ancestor(distance).values.put(name.lexeme, value);
+    }
+
+    /*
      * Updates an assignment in the environment.
      * If the variable isn't in this environment,
      * tries to update the variable in the enclosing
