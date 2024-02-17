@@ -240,7 +240,7 @@ class Scanner {
    *          false if not or if the Scanner is at the end of source
    */
   private boolean match(char expected) {
-    if (!isAtEnd()) {
+    if (isAtEnd()) {
       return false;
     }
 
