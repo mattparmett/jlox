@@ -20,6 +20,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     // Track whether we are currently inside a function declaration
     private FunctionType currentFunction = FunctionType.NONE;
 
+    // Track whether we are currently inside a class declaration
+    private ClassType currentClass = ClassType.NONE;
+
     Resolver(Interpreter interpreter) {
         this.interpreter = interpreter;
     }
@@ -28,6 +31,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         NONE,
         FUNCTION,
         METHOD
+    }
+
+    private enum ClassType {
+        NONE,
+        CLASS
     }
     
     /*
@@ -57,6 +65,9 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
      */
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        ClassType enclosingClass = currentClass;
+        currentClass = ClassType.CLASS;
+
         declare(stmt.name);
         define(stmt.name);
 
@@ -69,6 +80,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         endScope();
+        currentClass = enclosingClass;
         return null;
     }
 
@@ -223,6 +235,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitThisExpr(Expr.This expr) {
+        if (currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+            return null;
+        }
+
         // Treats 'this' similarly to other local
         // variables, since we manually set 'this'
         // in the local scope
