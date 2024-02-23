@@ -298,6 +298,11 @@ class Parser {
       if (expr instanceof Expr.Variable) {
         Token name = ((Expr.Variable)expr).name;
         return new Expr.Assign(name, value);
+      } else if (expr instanceof Expr.Get) {
+        // If left hand side is a get expression,
+        // this assignment must be a set expression
+        Expr.Get get = (Expr.Get)expr;
+        return new Expr.Set(get.object, get.name, value);
       }
 
       // Report but don't throw, since we don't need

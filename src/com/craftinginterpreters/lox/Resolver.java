@@ -189,6 +189,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitSetExpr(Expr.Set expr) {
+        // Instance property is dynamically resolved
+        // in the interpreter
+        resolve(expr.value);
+        resolve(expr.object);
+        return null;
+    }
+
+    @Override
     public Void visitUnaryExpr(Expr.Unary expr) {
         resolve(expr.right);
         return null;

@@ -387,6 +387,12 @@ class Interpreter implements Expr.Visitor<Object>,
         return function.call(this, arguments);
     }
 
+    /*
+     * Visits a get expression (access on instance property).
+     * 
+     * Evaluates the object being accessed, then gets the appropriate
+     * property value from that object.
+     */
     @Override
     public Object visitGetExpr(Expr.Get expr) {
         Object object = evaluate(expr.object);
@@ -396,6 +402,29 @@ class Interpreter implements Expr.Visitor<Object>,
 
         throw new RuntimeError(expr.name, "Only instances have properties.");
     }
+
+    /*
+     * Visits a set expression (assignment to instance property).
+     * 
+     * Evaluates the object being accessed, and throws a runtime
+     * error if that object is not a class instance.
+     * 
+     * Sets the property value to the result of evaluating the
+     * assignment value.
+     */
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+
+        if (!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name, "Only instances have fields.");
+        }
+
+        Object value = evaluate(expr.value);
+        ((LoxInstance)object).set(expr.name, value);
+        return value;
+    }
+
 
     /*
      * Helper methods
