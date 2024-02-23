@@ -11,6 +11,22 @@ class LoxFunction implements LoxCallable {
         this.declaration = declaration;
     }
 
+    /*
+     * "Binds" this function to a specific instance
+     * of a class.  Binding simply creates a scope
+     * around the function where the "this" variable
+     * refers to the class to which the function is bound.
+     * 
+     * Note: this environment is created inside of the method's
+     * original closure, so all variables in the original closure
+     * are accessible from the new inner environment.
+     */
+    LoxFunction bind(LoxInstance instance) {
+        Environment environment = new Environment(closure);
+        environment.define("this", instance);
+        return new LoxFunction(declaration, environment);
+    }
+
     @Override
     public int arity() {
         return declaration.params.size();

@@ -437,6 +437,15 @@ class Interpreter implements Expr.Visitor<Object>,
         return value;
     }
 
+    /*
+     * Visits a "this" expression; treats the "this"
+     * object as a local variable and looks up the
+     * reference in a local scope.
+     */
+    @Override
+    public Object visitThisExpr(Expr.This expr) {
+        return lookUpVariable(expr.keyword, expr);
+    }
 
     /*
      * Helper methods
