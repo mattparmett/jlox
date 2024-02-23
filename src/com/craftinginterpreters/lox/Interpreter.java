@@ -98,13 +98,25 @@ class Interpreter implements Expr.Visitor<Object>,
      * then turning the class syntax node into the runtime
      * representation of a class.
      * 
+     * Stores class methods in a map keyed by the method name.
+     * Methods are owned/stored in the LoxClass, but accessed
+     * via the LoxInstance (the class stores behavior, while
+     * the instance stores state).
+     * 
      * Two-stage binding process allows a class to reference
      * itself inside its own methods.
      */
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
         environment.define(stmt.name.lexeme, null);
-        LoxClass klass = new LoxClass(stmt.name.lexeme);
+
+        Map<String, LoxFunction> methods = new HashMap<>();
+        for (Stmt.Function method : stmt.methods) {
+            LoxFunction function = new LoxFunction(method, environment);
+            methods.put(method.name.lexeme, function);
+        }
+
+        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
         environment.assign(stmt.name, klass);
         return null;
     }
