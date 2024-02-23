@@ -112,7 +112,11 @@ class Interpreter implements Expr.Visitor<Object>,
 
         Map<String, LoxFunction> methods = new HashMap<>();
         for (Stmt.Function method : stmt.methods) {
-            LoxFunction function = new LoxFunction(method, environment);
+            LoxFunction function = new LoxFunction(
+                method,
+                environment,
+                method.name.lexeme.equals("init")
+            );
             methods.put(method.name.lexeme, function);
         }
 
@@ -139,7 +143,7 @@ class Interpreter implements Expr.Visitor<Object>,
     public Void visitFunctionStmt(Stmt.Function stmt) {
         // Initialize the function with the environment current
         // as of the function declaration (not a function call)
-        LoxFunction function = new LoxFunction(stmt, environment);
+        LoxFunction function = new LoxFunction(stmt, environment, false);
         environment.define(stmt.name.lexeme, function);
         return null;
     }

@@ -5,10 +5,12 @@ import java.util.List;
 class LoxFunction implements LoxCallable {
     private final Stmt.Function declaration;
     private final Environment closure;
+    private final boolean isInitializer;
 
-    LoxFunction(Stmt.Function declaration, Environment closure) {
+    LoxFunction(Stmt.Function declaration, Environment closure, boolean isInitializer) {
         this.closure = closure;
         this.declaration = declaration;
+        this.isInitializer = isInitializer;
     }
 
     /*
@@ -24,7 +26,7 @@ class LoxFunction implements LoxCallable {
     LoxFunction bind(LoxInstance instance) {
         Environment environment = new Environment(closure);
         environment.define("this", instance);
-        return new LoxFunction(declaration, environment);
+        return new LoxFunction(declaration, environment, isInitializer);
     }
 
     @Override
@@ -54,13 +56,18 @@ class LoxFunction implements LoxCallable {
             // that was active when function was called
             interpreter.executeBlock(declaration.body, environment);
         } catch (Return returnValue) {
-            // If the function returns a value, it will be passed back
-            // to us via a Return exception, which unwinds the call stack
-            return returnValue.value;
+            /*
+             * If the function returns a value, it will be passed back
+             * to us via a Return exception, which unwinds the call stack.
+             * 
+             * If this is an initializer, we force the return statement
+             * to return "this."
+             */
+            return isInitializer ? closure.getAt(0, "this") : returnValue.value;
         }
         
         // Function did not return a value
-        // Implicitly reutrn nil
-        return null;
+        // If initializer, return 'this', otherwise return nil
+        return isInitializer ? closure.getAt(0, "this") : null;
     }
 }
