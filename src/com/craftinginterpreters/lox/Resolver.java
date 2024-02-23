@@ -79,6 +79,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
 
             // Descend into the superclass AST & resolve
             resolve(stmt.superclass);
+
+            // If class has a superclass, create a new scope surrounding
+            // all its methods, where "super" is defined
+            beginScope();
+            scopes.peek().put("super", true);
         }
 
         beginScope();
@@ -93,6 +98,7 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         }
 
         endScope();
+        if (stmt.superclass != null) endScope();  // end "super" scope
         currentClass = enclosingClass;
         return null;
     }
@@ -249,6 +255,15 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         // in the interpreter
         resolve(expr.value);
         resolve(expr.object);
+        return null;
+    }
+
+    @Override
+    public Void visitSuperExpr(Expr.Super expr) {
+        // Treats 'super' similarly to other local
+        // variables, since we manually set 'super'
+        // in an enclosing scope
+        resolveLocal(expr, expr.keyword);
         return null;
     }
 
